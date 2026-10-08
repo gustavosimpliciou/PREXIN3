@@ -3,7 +3,7 @@ import { Link } from 'wouter';
 import { calculatePricing,emptyPricingInput,emptyMaterial,ENGINE_VERSION,type PricingInput,type PricingMaterialLine } from '@workspace/pricing-engine';
 import { api,useData,useAction,Panel,Field,Select,Notice,Heading,money,percent,imageData } from './shared';
 export function Calculator(){
-  const settings=useData('/settings'),materials=useData<any[]>('/materials'),printers=useData<any[]>('/printers'),prefs=useData('/preferences');
+  const settings=useData('/settings'),materials=useData<any[]>('/materials',[]),printers=useData<any[]>('/printers',[]),prefs=useData('/preferences');
   const params=new URLSearchParams(location.search),productId=params.get('product'),refresh=params.has('refresh'),duplicate=params.has('duplicate');
   const [input,setInput]=useState<PricingInput>(emptyPricingInput),[step,setStep]=useState(0),[advanced,setAdvanced]=useState(false),[message,setMessage]=useState(''),[customer,setCustomer]=useState('');
   const [meta,setMeta]=useState({sku:'',category:'Geral',description:'',image:''}),[loaded,setLoaded]=useState(false);

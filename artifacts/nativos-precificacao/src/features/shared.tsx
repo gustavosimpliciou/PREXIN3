@@ -3,12 +3,13 @@ import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
 import { parseBrazilianNumber } from '@workspace/pricing-engine';
 export const money=(v:number|null|undefined)=>v==null?'—':new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
 export const percent=(v:number|null|undefined)=>v==null?'—':`${(v*100).toLocaleString('pt-BR',{maximumFractionDigits:2})}%`;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 export async function api<T=any>(path:string,method='GET',body?:unknown):Promise<T>{
-  const response=await fetch(`/api${path}`,{method,credentials:'same-origin',headers:body?{'Content-Type':'application/json'}:undefined,body:body?JSON.stringify(body):undefined});
+  const response=await fetch(`${API_BASE}${path}`,{method,credentials:'same-origin',headers:body?{'Content-Type':'application/json'}:undefined,body:body?JSON.stringify(body):undefined});
   if(!response.ok){let message='Não foi possível concluir a operação.';try{const e=await response.json();message=e.error??message;if(e.fields?.length)message+=' '+e.fields.map((f:any)=>`${f.field}: ${f.message}`).join('; ');}catch{}throw new Error(message);}
   if(response.status===204)return undefined as T;return response.json();
 }
-export const useData=<T=any>(path:string)=>useQuery<T>({queryKey:[path],queryFn:()=>api<T>(path)});
+export const useData=<T=any>(path:string,fallback?:T)=>useQuery<T>({queryKey:[path],queryFn:()=>api<T>(path).catch(()=>fallback as T)});
 export function useAction<T=any>(action:(data:T)=>Promise<any>){const qc=useQueryClient();return useMutation({mutationFn:action,onSuccess:()=>qc.invalidateQueries()});}
 export function Notice({children,error=false}:{children:ReactNode;error?:boolean}){return <div role={error?'alert':'status'} className={`rounded-xl border p-4 text-sm ${error?'border-red-300 bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-100':'border-blue-200 bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-100'}`}>{children}</div>;}
 export function Panel({title,children}:{title:string;children:ReactNode}){return <section className="card p-5"><h2 className="mb-4 text-base font-bold">{title}</h2>{children}</section>;}
