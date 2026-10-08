@@ -1,6 +1,6 @@
 [build]
   command = "pnpm install && pnpm --filter @workspace/nativos-precificacao run build"
-  publish = "artifacts/nativos-precificacao/dist"
+  publish = "artifacts/nativos-precificacao/dist/public"
 
 [[redirects]]
   from = "/*"
