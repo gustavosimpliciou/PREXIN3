@@ -1,0 +1,24 @@
+import { useEffect,useId,useState,type ReactNode } from 'react';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import { parseBrazilianNumber } from '@workspace/pricing-engine';
+export const money=(v:number|null|undefined)=>v==null?'—':new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
+export const percent=(v:number|null|undefined)=>v==null?'—':`${(v*100).toLocaleString('pt-BR',{maximumFractionDigits:2})}%`;
+export async function api<T=any>(path:string,method='GET',body?:unknown):Promise<T>{
+  const response=await fetch(`/api${path}`,{method,credentials:'same-origin',headers:body?{'Content-Type':'application/json'}:undefined,body:body?JSON.stringify(body):undefined});
+  if(!response.ok){let message='Não foi possível concluir a operação.';try{const e=await response.json();message=e.error??message;if(e.fields?.length)message+=' '+e.fields.map((f:any)=>`${f.field}: ${f.message}`).join('; ');}catch{}throw new Error(message);}
+  if(response.status===204)return undefined as T;return response.json();
+}
+export const useData=<T=any>(path:string)=>useQuery<T>({queryKey:[path],queryFn:()=>api<T>(path)});
+export function useAction<T=any>(action:(data:T)=>Promise<any>){const qc=useQueryClient();return useMutation({mutationFn:action,onSuccess:()=>qc.invalidateQueries()});}
+export function Notice({children,error=false}:{children:ReactNode;error?:boolean}){return <div role={error?'alert':'status'} className={`rounded-xl border p-4 text-sm ${error?'border-red-300 bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-100':'border-blue-200 bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-100'}`}>{children}</div>;}
+export function Panel({title,children}:{title:string;children:ReactNode}){return <section className="card p-5"><h2 className="mb-4 text-base font-bold">{title}</h2>{children}</section>;}
+export function Field({label,value,onChange,unit,numeric=false,optional=false,type='text'}:{label:string;value:any;onChange:(v:any)=>void;unit?:string;numeric?:boolean;optional?:boolean;type?:string}){
+  const id=useId();const [draft,setDraft]=useState('');const [focused,setFocused]=useState(false);const [invalid,setInvalid]=useState(false);
+  useEffect(()=>{if(!focused)setDraft(value==null?'':numeric?String(value).replace('.',','):String(value));},[value,focused,numeric]);
+  return <div><label htmlFor={id} className="mb-1.5 block text-xs font-semibold">{label}{unit&&<span className="ml-1 font-normal text-muted-foreground">({unit})</span>}</label><input id={id} className="field" type={numeric?'text':type} inputMode={numeric?'decimal':undefined} value={draft} aria-invalid={invalid} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)} onChange={e=>{const text=e.target.value;setDraft(text);if(!numeric){onChange(text);return;}const n=parseBrazilianNumber(text);setInvalid(n===null&&(!optional||text!==''));onChange(n);}}/>{invalid&&<span className="text-xs text-red-600">Informe um número válido.</span>}</div>;
+}
+export function Select({label,value,onChange,options}:{label:string;value:any;onChange:(v:string)=>void;options:{value:string;label:string}[]}){const id=useId();return <div><label htmlFor={id} className="mb-1.5 block text-xs font-semibold">{label}</label><select id={id} className="field" value={value??''} onChange={e=>onChange(e.target.value)}>{options.map(x=><option key={x.value} value={x.value}>{x.label}</option>)}</select></div>;}
+export function Heading({title,description,children}:{title:string;description?:string;children?:ReactNode}){return <div className="mb-6 flex flex-wrap items-center justify-between gap-4"><div><h1 className="text-3xl font-extrabold">{title}</h1><p className="mt-2 text-sm text-muted-foreground">{description}</p></div>{children}</div>;}
+export function Loading({query}:{query:{isLoading:boolean;isError:boolean;refetch:()=>unknown}}){if(query.isLoading)return <Notice>Carregando seus dados…</Notice>;if(query.isError)return <Notice error>Não foi possível carregar. <button className="underline" onClick={()=>query.refetch()}>Tentar novamente</button></Notice>;return null;}
+export async function downloadPdf(id:number,internal=false){const r=await fetch(`/api/quotes/${id}/pdf${internal?'?internal=1':''}`,{credentials:'same-origin'});if(!r.ok)throw new Error('Não foi possível gerar o PDF.');const url=URL.createObjectURL(await r.blob());const a=document.createElement('a');a.href=url;a.download=`${internal?'interno':'orcamento'}-${id}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+export async function imageData(file:File):Promise<string>{if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>300000)throw new Error('Use PNG, JPEG ou WebP de até 300 KB.');return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=reject;reader.readAsDataURL(file);});}

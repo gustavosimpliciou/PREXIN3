@@ -1,0 +1,561 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API for Nativos 3D pricing and production records
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: pricing
+  - name: materials
+  - name: printers
+  - name: products
+  - name: quotes
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [pricing]
+      summary: Get real dashboard totals and recent records
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [pricing]
+      summary: Get organization pricing settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    put:
+      operationId: saveSettings
+      tags: [pricing]
+      summary: Save organization pricing settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsInput"
+      responses:
+        "200":
+          description: Saved settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+  /calculations:
+    post:
+      operationId: calculatePricing
+      tags: [pricing]
+      summary: Calculate production costs and channel prices
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalculationInput"
+      responses:
+        "200":
+          description: Calculation, including any missing data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Calculation"
+  /materials:
+    get:
+      operationId: listMaterials
+      tags: [materials]
+      summary: List saved materials
+      responses:
+        "200":
+          description: Materials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Material"
+    post:
+      operationId: createMaterial
+      tags: [materials]
+      summary: Create a material
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaterialInput"
+      responses:
+        "201":
+          description: Created material
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+  /materials/{id}:
+    patch:
+      operationId: updateMaterial
+      tags: [materials]
+      summary: Update a material
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaterialInput"
+      responses:
+        "200":
+          description: Updated material
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Material"
+    delete:
+      operationId: archiveMaterial
+      tags: [materials]
+      summary: Archive a material
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Archived
+  /printers:
+    get:
+      operationId: listPrinters
+      tags: [printers]
+      summary: List saved printers
+      responses:
+        "200":
+          description: Printers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Printer"
+    post:
+      operationId: createPrinter
+      tags: [printers]
+      summary: Create a printer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrinterInput"
+      responses:
+        "201":
+          description: Created printer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Printer"
+  /printers/{id}:
+    patch:
+      operationId: updatePrinter
+      tags: [printers]
+      summary: Update a printer
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrinterInput"
+      responses:
+        "200":
+          description: Updated printer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Printer"
+    delete:
+      operationId: archivePrinter
+      tags: [printers]
+      summary: Archive a printer
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Archived
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List saved product calculations
+      responses:
+        "200":
+          description: Products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Save a product and pricing snapshot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Created product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+  /products/{id}:
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get product pricing history snapshot
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    patch:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product and create a new snapshot
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Deleted
+  /quotes:
+    get:
+      operationId: listQuotes
+      tags: [quotes]
+      summary: List saved quotations
+      responses:
+        "200":
+          description: Quotes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Quote"
+    post:
+      operationId: createQuote
+      tags: [quotes]
+      summary: Save a quote snapshot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuoteInput"
+      responses:
+        "201":
+          description: Created quote
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+    Dashboard:
+      type: object
+      properties:
+        productCount: { type: integer }
+        materialCount: { type: integer }
+        printerCount: { type: integer }
+        quoteCount: { type: integer }
+        lowStockMaterials:
+          type: array
+          items: { $ref: "#/components/schemas/Material" }
+        recentProducts:
+          type: array
+          items: { $ref: "#/components/schemas/Product" }
+        recentQuotes:
+          type: array
+          items: { $ref: "#/components/schemas/Quote" }
+      required: [productCount, materialCount, printerCount, quoteCount, lowStockMaterials, recentProducts, recentQuotes]
+    Settings:
+      allOf:
+        - $ref: "#/components/schemas/SettingsInput"
+        - type: object
+          properties:
+            id: { type: integer }
+          required: [id]
+    SettingsInput:
+      type: object
+      properties:
+        companyName: { type: string }
+        currency: { type: string, enum: [BRL] }
+        energyRate: { type: number, minimum: 0 }
+        hourlyLaborRate: { type: number, minimum: 0 }
+        monthlyFixedExpenses: { type: number, minimum: 0 }
+        productiveHoursMonthly: { type: number, minimum: 0 }
+        directMargin: { type: number, minimum: 0, maximum: 0.99 }
+        wholesaleMargin: { type: number, minimum: 0, maximum: 0.99 }
+        marketplaceMargin: { type: number, minimum: 0, maximum: 0.99 }
+        directFeePercent: { type: number, minimum: 0, maximum: 0.99 }
+        directFeePerOrder: { type: number, minimum: 0 }
+        directFeePerUnit: { type: number, minimum: 0 }
+        wholesaleFeePercent: { type: number, minimum: 0, maximum: 0.99 }
+        wholesaleFeePerOrder: { type: number, minimum: 0 }
+        wholesaleFeePerUnit: { type: number, minimum: 0 }
+        marketplaceFeePercent: { type: number, minimum: 0, maximum: 0.99 }
+        marketplaceFeePerOrder: { type: number, minimum: 0 }
+        marketplaceFeePerUnit: { type: number, minimum: 0 }
+        rounding: { type: string, enum: [cent, half, whole, ending90, ending99] }
+      required: [companyName, currency, energyRate, hourlyLaborRate, monthlyFixedExpenses, productiveHoursMonthly, directMargin, wholesaleMargin, marketplaceMargin, directFeePercent, directFeePerOrder, directFeePerUnit, wholesaleFeePercent, wholesaleFeePerOrder, wholesaleFeePerUnit, marketplaceFeePercent, marketplaceFeePerOrder, marketplaceFeePerUnit, rounding]
+    Material:
+      allOf:
+        - $ref: "#/components/schemas/MaterialInput"
+        - type: object
+          properties:
+            id: { type: integer }
+            costPerGram: { type: number }
+            createdAt: { type: string, format: date-time }
+          required: [id, costPerGram, createdAt]
+    MaterialInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        type: { type: string }
+        brand: { type: string }
+        color: { type: string }
+        supplier: { type: string }
+        netWeightGrams: { type: number, exclusiveMinimum: 0 }
+        purchaseValue: { type: number, minimum: 0 }
+        allocatedFreight: { type: number, minimum: 0 }
+        stockGrams: { type: number, minimum: 0 }
+        lowStockThreshold: { type: number, minimum: 0 }
+        archived: { type: boolean }
+      required: [name, type, brand, color, supplier, netWeightGrams, purchaseValue, allocatedFreight, stockGrams, lowStockThreshold, archived]
+    Printer:
+      allOf:
+        - $ref: "#/components/schemas/PrinterInput"
+        - type: object
+          properties:
+            id: { type: integer }
+            createdAt: { type: string, format: date-time }
+          required: [id, createdAt]
+    PrinterInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        model: { type: string }
+        purchaseValue: { type: number, minimum: 0 }
+        residualValue: { type: number, minimum: 0 }
+        usefulLifeHours: { type: number, minimum: 0 }
+        averagePowerWatts: { type: number, minimum: 0 }
+        maintenancePerHour: { type: number, minimum: 0 }
+        active: { type: boolean }
+      required: [name, model, purchaseValue, residualValue, usefulLifeHours, averagePowerWatts, maintenancePerHour, active]
+    Product:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        sku: { type: ["string", "null"] }
+        category: { type: string }
+        status: { type: string, enum: [incomplete, ready] }
+        input: { type: object, additionalProperties: true }
+        calculation: { allOf: [{ $ref: "#/components/schemas/Calculation" }], nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, name, sku, category, status, input, calculation, createdAt, updatedAt]
+    ProductInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        sku: { type: ["string", "null"] }
+        category: { type: string }
+        input: { type: object, additionalProperties: true }
+        calculation: { allOf: [{ $ref: "#/components/schemas/Calculation" }], nullable: true }
+      required: [name, sku, category, input, calculation]
+    Quote:
+      type: object
+      properties:
+        id: { type: integer }
+        customerName: { type: ["string", "null"] }
+        productName: { type: string }
+        quantity: { type: integer }
+        unitPrice: { type: number }
+        total: { type: number }
+        status: { type: string, enum: [draft, sent, approved, rejected, expired] }
+        validUntil: { type: ["string", "null"], format: date }
+        notes: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, customerName, productName, quantity, unitPrice, total, status, validUntil, notes, createdAt]
+    QuoteInput:
+      type: object
+      properties:
+        customerName: { type: ["string", "null"] }
+        productName: { type: string, minLength: 1 }
+        quantity: { type: integer, minimum: 1 }
+        unitPrice: { type: number, minimum: 0 }
+        status: { type: string, enum: [draft, sent, approved, rejected, expired] }
+        validUntil: { type: ["string", "null"], format: date }
+        notes: { type: string }
+      required: [customerName, productName, quantity, unitPrice, status, validUntil, notes]
+    MaterialLine:
+      type: object
+      properties:
+        materialId: { type: ["integer", "null"] }
+        name: { type: string }
+        costPerGram: { type: ["number", "null"] }
+        usefulGrams: { type: number, minimum: 0 }
+        supportsGrams: { type: number, minimum: 0 }
+        brimGrams: { type: number, minimum: 0 }
+        purgeGrams: { type: number, minimum: 0 }
+        wasteMode: { type: string, enum: [none, grams, percent] }
+        wasteValue: { type: number, minimum: 0 }
+        slicerTotalGrams: { type: ["number", "null"] }
+      required: [materialId, name, costPerGram, usefulGrams, supportsGrams, brimGrams, purgeGrams, wasteMode, wasteValue, slicerTotalGrams]
+    CalculationInput:
+      type: object
+      properties:
+        name: { type: string }
+        quantity: { type: integer, minimum: 1 }
+        piecesPerRun: { type: integer, minimum: 1 }
+        materials:
+          type: array
+          items: { $ref: "#/components/schemas/MaterialLine" }
+        printMinutes: { type: ["number", "null"], minimum: 0 }
+        setupMinutesPerRun: { type: number, minimum: 0 }
+        finishingMinutesPerUnit: { type: number, minimum: 0 }
+        jobPrepMinutes: { type: number, minimum: 0 }
+        printerId: { type: ["integer", "null"] }
+        averagePowerWatts: { type: ["number", "null"], minimum: 0 }
+        measuredKwh: { type: ["number", "null"], minimum: 0 }
+        energyRate: { type: ["number", "null"], minimum: 0 }
+        machinePurchaseValue: { type: ["number", "null"], minimum: 0 }
+        machineResidualValue: { type: ["number", "null"], minimum: 0 }
+        machineUsefulLifeHours: { type: ["number", "null"], minimum: 0 }
+        machineMaintenancePerHour: { type: ["number", "null"], minimum: 0 }
+        machineEnabled: { type: boolean }
+        hourlyLaborRate: { type: ["number", "null"], minimum: 0 }
+        monthlyFixedExpenses: { type: ["number", "null"], minimum: 0 }
+        productiveHoursMonthly: { type: ["number", "null"], minimum: 0 }
+        failureRate: { type: ["number", "null"], minimum: 0, maximum: 0.99 }
+        packagePerUnit: { type: number, minimum: 0 }
+        packagePerOrder: { type: number, minimum: 0 }
+        componentsPerUnit: { type: number, minimum: 0 }
+        licensePerUnit: { type: number, minimum: 0 }
+        licensePerOrder: { type: number, minimum: 0 }
+        sellerShipping: { type: number, minimum: 0 }
+        otherPerUnit: { type: number, minimum: 0 }
+        otherPerOrder: { type: number, minimum: 0 }
+        percentFees: { type: number, minimum: 0, maximum: 0.99 }
+        fixedFeePerOrder: { type: number, minimum: 0 }
+        fixedFeePerUnit: { type: number, minimum: 0 }
+        desiredMargin: { type: number, minimum: 0, maximum: 0.99 }
+        rounding: { type: string, enum: [cent, half, whole, ending90, ending99] }
+        practicedUnitPrice: { type: ["number", "null"], minimum: 0 }
+      required: [name, quantity, piecesPerRun, materials, printMinutes, setupMinutesPerRun, finishingMinutesPerUnit, jobPrepMinutes, printerId, averagePowerWatts, measuredKwh, energyRate, machinePurchaseValue, machineResidualValue, machineUsefulLifeHours, machineMaintenancePerHour, machineEnabled, hourlyLaborRate, monthlyFixedExpenses, productiveHoursMonthly, failureRate, packagePerUnit, packagePerOrder, componentsPerUnit, licensePerUnit, licensePerOrder, sellerShipping, otherPerUnit, otherPerOrder, percentFees, fixedFeePerOrder, fixedFeePerUnit, desiredMargin, rounding, practicedUnitPrice]
+    CostLine:
+      type: object
+      properties:
+        label: { type: string }
+        amount: { type: number }
+      required: [label, amount]
+    ChannelPrice:
+      type: object
+      properties:
+        channel: { type: string }
+        breakEvenPerUnit: { type: ["number", "null"] }
+        recommendedPerUnit: { type: ["number", "null"] }
+        total: { type: ["number", "null"] }
+        estimatedResult: { type: ["number", "null"] }
+        estimatedMargin: { type: ["number", "null"] }
+      required: [channel, breakEvenPerUnit, recommendedPerUnit, total, estimatedResult, estimatedMargin]
+    Calculation:
+      type: object
+      properties:
+        complete: { type: boolean }
+        missing: { type: array, items: { type: string } }
+        errors: { type: array, items: { type: string } }
+        quantity: { type: integer }
+        runs: { type: integer }
+        manufacturingCost: { type: ["number", "null"] }
+        completeCost: { type: ["number", "null"] }
+        unitCost: { type: ["number", "null"] }
+        materialGrams: { type: ["number", "null"] }
+        costs: { type: array, items: { $ref: "#/components/schemas/CostLine" } }
+        channels: { type: array, items: { $ref: "#/components/schemas/ChannelPrice" } }
+        legacyComparison:
+          type: object
+          properties:
+            cost: { type: ["number", "null"] }
+            legacyMinimum: { type: ["number", "null"] }
+            legacyWholesale: { type: ["number", "null"] }
+            legacyMarketplace: { type: ["number", "null"] }
+          required: [cost, legacyMinimum, legacyWholesale, legacyMarketplace]
+        assumptions: { type: array, items: { type: string } }
+      required: [complete, missing, errors, quantity, runs, manufacturingCost, completeCost, unitCost, materialGrams, costs, channels, legacyComparison, assumptions]

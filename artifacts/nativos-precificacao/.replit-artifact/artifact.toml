@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Nativos 3D — Precificação"
+description = "Aplicação em português para fabricantes de impressão 3D calcularem custos, margens e preços recomendados, acompanharem produtos e prepararem orçamentos."
+version = "1.0.0"
+id = "artifacts/nativos-precificacao"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20585
+
+[services.development]
+run = "pnpm --filter @workspace/nativos-precificacao run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nativos-precificacao", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/nativos-precificacao/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20585"
+BASE_PATH = "/"

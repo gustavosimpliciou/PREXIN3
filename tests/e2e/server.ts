@@ -1,0 +1,13 @@
+import express from '../../artifacts/api-server/node_modules/express/index.js';
+process.env.DATABASE_MODE='local';process.env.LOCAL_DATABASE_PATH='memory://';
+const {migrate}=await import('../../lib/db/src/migrate');await migrate();
+const {default:router}=await import('../../artifacts/api-server/src/routes/pricing');
+const {errorHandler}=await import('../../artifacts/api-server/src/app');
+const {db,materialsTable,printersTable,pricingSettingsTable}=await import('../../lib/db/src/index');
+const userId='e2e-isolated-account';
+await db.insert(materialsTable).values({userId,name:'PLA Branco (teste)',type:'PLA',brand:'Teste',color:'Branco',supplier:'Teste',netWeightGrams:1000,purchaseValue:100,stockGrams:1000});
+await db.insert(printersTable).values({userId,name:'Impressora de teste',model:'Teste',purchaseValue:3000,residualValue:0,usefulLifeHours:6000,averagePowerWatts:150,maintenancePerHour:0});
+await db.insert(pricingSettingsTable).values({userId,companyName:'Oficina de teste',energyRate:1,hourlyLaborRate:24,monthlyFixedExpenses:0,productiveHoursMonthly:0,directMargin:.3,directFeePercent:.1,directFeePerOrder:2});
+const app=express();app.use(express.json({limit:'8mb'}));
+app.use((_req,res,next)=>{res.locals.userId=userId;next();});app.use('/api',router);app.use(errorHandler);
+app.listen(5001,'127.0.0.1',()=>console.log('API exclusiva de testes na porta 5001'));
